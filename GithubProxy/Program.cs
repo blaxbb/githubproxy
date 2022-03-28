@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 
+string? CLIENT_SECRET = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -66,6 +68,11 @@ app.MapPost("/login/oauth/access_token", async (context) => {
         return;
     }
 
+    if (!string.IsNullOrWhiteSpace(CLIENT_SECRET))
+    {
+        oauth = oauth with { client_secret = CLIENT_SECRET };
+    }
+
     var response = await client.PostAsJsonAsync("https://github.com/login/oauth/access_token", oauth);
     if (!response.IsSuccessStatusCode)
     {
@@ -88,5 +95,5 @@ app.Run();
 internal record OauthFlowRequest(string client_id, List<string> scopes);
 internal record OauthFlowResponse(string device_code, string user_code, string verification_uri, int expires_in, int interval);
 
-internal record OauthTokenRequest(string client_id, string device_code, string user_code, string grant_type);
+internal record OauthTokenRequest(string client_id, string code, string client_secret, string device_code, string user_code, string grant_type);
 internal record OauthTokenResponse(string token_type, string access_token, string scope, string error, string error_description, string error_uri);
